@@ -1,0 +1,7 @@
+services:
+    refrigerator.bundle.refrigerator_bundle.cache_listener:
+        class: Refrigerator\Bundle\EventListener\CacheListener
+        #scope: request
+        arguments: ["@security.context"]
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelController }
