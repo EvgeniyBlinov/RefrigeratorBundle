@@ -1,11 +1,13 @@
 <?php
 namespace Cent\RefrigeratorBundle\EventListener;
 
-use Symfony\Component\Security\Core\SecurityContextInterface;
+use Symfony\Component\DependencyInjection\IntrospectableContainerInterface;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent; 
 use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpFoundation\Request;
+
+use Cent\RefrigeratorBundle\Entity\CacheDataEntity;
 
 /**
  * CacheListener
@@ -17,18 +19,24 @@ use Symfony\Component\HttpFoundation\Request;
 class CacheListener 
 {
     /**
-     * @var \Symfony\Component\Security\Core\SecurityContextInterface
+     * @var \Symfony\Component\DependencyInjection\IntrospectableContainerInterface
      */
-    private $security_context;
+    private $_container;
+    /**
+     * @var \Cent\RefrigeratorBundle\Extension\Adapter\AbstarctCacheAdapter
+     */
+    private $_cacheAdapter;
     
     /**
      * Constructor
      * 
-     * @param \Symfony\Component\Security\Core\SecurityContextInterface $security_context
+     * @param \Symfony\Component\DependencyInjection\IntrospectableContainerInterface $container
+     * @param \Cent\RefrigeratorBundle\Extension\CacheFactory $cacheFactory
      */
-    public function __construct(SecurityContextInterface $security_context)
+    public function __construct(IntrospectableContainerInterface $container, $cacheFactory)
     {
-        $this->security_context = $security_context;
+        $this->_container = $container;
+        $this->_cacheAdapter = $cacheFactory->getAdapter();
     }
     
     /**
@@ -41,33 +49,28 @@ class CacheListener
     {
         $controller = $event->getController();
         
-        if (!is_array($controller)) {    // not a object but a different kind of callable. Do nothing
-            return;
-        }
-        $controllerObject = $controller[0];
+        if (
+            $this->_container->getParameter('use_refrigerator_cache') &&
+            is_array($controller) &&            // not a object but a different kind of callable. Do nothing
+            $this->_cacheAdapter->isActive()
+        ) {
+            $controllerObject = $controller[0];
 
-        if (false === strpos(get_class($controllerObject), 'Symfony\\Bundle')) {
-            //echo "<pre>";var_dump(
-            //get_class_methods(
-            //$event
-            //)
-            //);die;
-            
-            //preg_match('/(?<key>[a-z]+::[a-z]+$)/i', $controllerObject
-                //->getRequest()
-                //->attributes
-                //->get('_controller'),
-                //$matches);
-            
-            //$key = isset($matches['key']) ?
-                //$matches['key'] :
-            $key = $this->getKey($event->getRequest());
-
-            //echo "<pre>";var_dump(
-                //$key
-            //);die;
+            if (false === strpos(get_class($controllerObject), 'Symfony\\Bundle')) {
+                    
+                if (null == $data = $this->_cacheAdapter->getCacheData($this->getKey($event->getRequest()))) {
+                    return;
+                }
+                
+                foreach ($data->getHeaders() as $header) {
+                    header($header);
+                }
+                
+                die($data->getAttribute('content'));
+            }
         }
         
+        return;
     }
     
     /**
@@ -78,55 +81,38 @@ class CacheListener
      */
     public function onKernelResponse(PostResponseEvent $event)
     {
-        $request = $event->getRequest();
-        $response = $event->getResponse();
-        
-        $methods = get_class_methods(
-        $event
-        );
-        asort($methods);
-        
-        $methods = get_class_methods(
-        $response
-        );
-        asort($methods);
-        
-        $key = $this->getKey($event->getRequest());
-        //$response->getContent()
-        
-        
-        /**
-         * Записать хедеры и куки по отдельному в ключ
-         * хранить хедеры и контент
-         *
-         
-         {
-            "headers": "",
-            "content": "",
-            "meta": ""
-         }
-         /**/
-        
-        //foreach ($this->headers->allPreserveCase() as $name => $values) {
-            //foreach ($values as $value) {
-                //header($name.': '.$value, false, $this->statusCode);
+        if ($this->_container->getParameter('use_refrigerator_cache')) {
+            $request = $event->getRequest();
+            $response = $event->getResponse();
+            
+            /**
+             *                  @TODO
+             * Записать хедеры и куки по отдельному в ключ
+             * хранить хедеры и контент
+             * хранить теги сущностей в редисе, для того, чтобы можно было
+             * удалять ключи при обновлении какого-нибудь тега
+             * выкидывать из хедеров куки, чтобы не было уязвимости
+             *
+             /**/
+            
+            //foreach ($this->headers->allPreserveCase() as $name => $values) {
+                //foreach ($values as $value) {
+                    //header($name.': '.$value, false, $this->statusCode);
+                //}
             //}
-        //}
 
-        //// cookies
-        //foreach ($this->headers->getCookies() as $cookie) {
-            //setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
-        //}
-        //headers_list()
-        
-        echo "<pre>";var_dump(
-        //$methods
-        //->sendHeaders()
-        headers_list()
-        //->getHeaders()
-        //->getContent()
-        );
-        //die;
+            //// cookies
+            //foreach ($this->headers->getCookies() as $cookie) {
+                //setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
+            //}
+            //headers_list()
+            
+            $this->_cacheAdapter->setCacheData($this->getKey($event->getRequest()), new CacheDataEntity(array(
+                'meta'    => '',
+                'headers' => json_encode(headers_list()),
+                'content' => $response->getContent(),
+            )));
+        }
     }
     
     /**
