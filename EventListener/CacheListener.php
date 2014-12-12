@@ -23,9 +23,9 @@ class CacheListener
      */
     private $_container;
     /**
-     * @var \Cent\RefrigeratorBundle\Extension\Adapter\AbstarctCacheAdapter
+     * @var \Cent\RefrigeratorBundle\Extension\CacheFactory
      */
-    private $_cacheAdapter;
+    private $_cacheFactory;
     
     /**
      * Constructor
@@ -36,7 +36,7 @@ class CacheListener
     public function __construct(IntrospectableContainerInterface $container, $cacheFactory)
     {
         $this->_container = $container;
-        $this->_cacheAdapter = $cacheFactory->getAdapter();
+        $this->_cacheFactory = $cacheFactory;
     }
     
     /**
@@ -52,13 +52,13 @@ class CacheListener
         if (
             $this->_container->getParameter('use_refrigerator_cache') &&
             is_array($controller) &&            // not a object but a different kind of callable. Do nothing
-            $this->_cacheAdapter->isActive()
+            $this->_cacheFactory->getAdapter()->isActive()
         ) {
             $controllerObject = $controller[0];
 
             if (false === strpos(get_class($controllerObject), 'Symfony\\Bundle')) {
                     
-                if (null == $data = $this->_cacheAdapter->getCacheData($this->getKey($event->getRequest()))) {
+                if (null == $data = $this->_cacheFactory->getCacheData()) {
                     return;
                 }
                 
@@ -82,49 +82,10 @@ class CacheListener
     public function onKernelResponse(PostResponseEvent $event)
     {
         if ($this->_container->getParameter('use_refrigerator_cache')) {
-            $request = $event->getRequest();
-            $response = $event->getResponse();
-            
-            /**
-             *                  @TODO
-             * Записать хедеры и куки по отдельному в ключ
-             * хранить хедеры и контент
-             * хранить теги сущностей в редисе, для того, чтобы можно было
-             * удалять ключи при обновлении какого-нибудь тега
-             * выкидывать из хедеров куки, чтобы не было уязвимости
-             *
-             /**/
-            
-            //foreach ($this->headers->allPreserveCase() as $name => $values) {
-                //foreach ($values as $value) {
-                    //header($name.': '.$value, false, $this->statusCode);
-                //}
-            //}
-
-            //// cookies
-            //foreach ($this->headers->getCookies() as $cookie) {
-                //setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
-            //}
-            //headers_list()
-            
-            $this->_cacheAdapter->setCacheData($this->getKey($event->getRequest()), new CacheDataEntity(array(
-                'meta'    => '',
-                'headers' => json_encode(headers_list()),
-                'content' => $response->getContent(),
-            )));
+            $this->_cacheFactory
+                ->setResponse($event->getResponse())
+                ->setCacheData();
         }
+        return;
     }
-    
-    /**
-     * 
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @return string
-     */
-    public function getKey(Request $request)
-    {
-        //return sprintf('root%s', str_replace('/', ':', $request->getPathInfo()));
-        return $request->getPathInfo();
-    }
-    
-    
 }

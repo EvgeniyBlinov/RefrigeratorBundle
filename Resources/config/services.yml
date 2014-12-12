@@ -1,7 +1,28 @@
+parameters:
+    use_refrigerator_cache: true
+    redis_uri: "tcp://127.0.0.1:6379?alias=first-node"
+    redis_options: 
+        prefix: "ska:"
+    refrigerator:
+        cache_all: true
+
 services:
+    redis:
+        class: Predis\Client
+        arguments: [ "%redis_uri%", "%redis_options%" ]
+        
+    cent.refrigerator_bundle.extension.cache_factory:
+        class: Cent\RefrigeratorBundle\Extension\CacheFactory
+        arguments: 
+            0: "@redis"
+            1: "@request_stack"
+            2: { options: "%refrigerator%", tags: "%entity_tags%", cache_options: "%refrigerator_options%" }
+        calls: 
+            - [ getAdapter ]
+        
     cent.refrigerator_bundle.cache_listener:
         class: Cent\RefrigeratorBundle\EventListener\CacheListener
-        scope: request
-        arguments: [ "@security.context" ]
+        arguments: [ "@service_container",  "@cent.refrigerator_bundle.extension.cache_factory"]
         tags:
             - { name: "kernel.event_listener", event: "kernel.controller",  method: "onKernelController" }
+            - { name: kernel.event_listener, event: kernel.terminate, method: onKernelResponse }

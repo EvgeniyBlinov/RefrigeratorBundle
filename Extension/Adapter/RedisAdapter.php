@@ -28,8 +28,9 @@ class RedisAdapter extends AbstarctCacheAdapter
      * 
      * @param string $key
      * @param \Cent\RefrigeratorBundle\Entity\CacheDataEntity $cacheDataEntity
+     * @param array $options
      */
-    public function setCacheData($key, CacheDataEntity $cacheDataEntity)
+    public function setCacheData($key, CacheDataEntity $cacheDataEntity, $options = array())
     {
         $this->getClient()->set($key, (string) $cacheDataEntity);
         
