@@ -198,7 +198,6 @@ class CacheFactory
      */
     public function getKey(Request $request)
     {
-        //return sprintf('root%s', str_replace('/', ':', $request->getPathInfo()));
         return $request->getPathInfo();
     }
     
@@ -221,7 +220,6 @@ class CacheFactory
         // @TODO
         
         /*******************         @TODO      ****************************
-         * Залить на гитхаб
          * !!!! Исправить в БД ложить только настройки к УРЛ
          * Подправить формы
          * Удалить ненужные формы
@@ -259,40 +257,41 @@ class CacheFactory
         
         $key = $this->getKey($this->getRequest());
         if (!$this->isIgnored($key)) {
-            $status = $this->getAdapter()->setCacheData(
-                $key,
-                new CacheDataEntity(array(
-                    'meta'    => '',
-                    'headers' => json_encode(headers_list()),
-                    'content' => $this->getResponse()->getContent(),
-                )),
-                (array) $this->getCacheOption(array('name' => $key))
+            $cacheOprions = (array) $this->getCacheOption(array('name' => $key));
+            if ($this->getOption('cache_all') || count($cacheOprions)) {
+                $status = $this->getAdapter()->setCacheData(
+                    $key,
+                    new CacheDataEntity(array(
+                        'meta'    => '',
+                        'headers' => json_encode(headers_list()),
+                        'content' => $this->getResponse()->getContent(),
+                    )),
+                    $cacheOprions
                 );
+            }
         }
         
         return $this;
     }
     
     /**
-     * @TODO
+     * Is this name in ignored
+     * 
+     * @param string $name
+     * @return boolean
      */
     public function isIgnored($name)
     {
-        return preg_match('~^/(admin|_wdf)~i', $name);
-    }
-    
-    
-    /**
-    public function getCache()
-    {
-        return $this->_cache;
-    }
-    
-    public function setCache($cache)
-    {
-        $this->_cache = $cache;
+        foreach ($this->_cacheOptionsIgnored as $ignored) {
+            if (isset($ignored['pattern']) && preg_match($ignored['pattern'], $name)) {
+                return true;
+            }
+            
+            if (isset($ignored['name']) && $ignored['name'] == $name) {
+                return true;
+            }
+        }
         
-        return $this;
+        return false;
     }
-    /**/
 }

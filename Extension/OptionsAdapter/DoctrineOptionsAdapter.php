@@ -30,6 +30,8 @@ class DoctrineOptionsAdapter implements OptionsAdapterIntarface
                 ->setParameter($key, $value);
         }
         
-        return $qb->getQuery()->getArrayResult();
+        $result = current($qb->getQuery()->getArrayResult());
+        
+        return $result !== false ? $result : null;
     }
 }

@@ -32,7 +32,11 @@ class RedisAdapter extends AbstarctCacheAdapter
      */
     public function setCacheData($key, CacheDataEntity $cacheDataEntity, $options = array())
     {
-        $this->getClient()->set($key, (string) $cacheDataEntity);
+        $client = $this->getClient();
+        $client->set($key, (string) $cacheDataEntity);
+        if (isset($options['expire'])) {
+            $client->expire($key, $options['expire']);
+        }
         
         return $this;
     }
