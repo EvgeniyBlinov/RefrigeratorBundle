@@ -4,7 +4,7 @@ namespace Cent\RefrigeratorBundle\Entity;
 /**
  * class_desc
  *
- * @package    package
+ * @package    Refrigerator
  * @author     Evgeniy Blinov <evgeniy_blinov@mail.ru>
  */
 

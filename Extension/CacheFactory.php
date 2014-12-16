@@ -9,6 +9,8 @@ use Cent\RefrigeratorBundle\Extension\Adapter\RedisAdapter;
 use Cent\RefrigeratorBundle\Extension\Adapter\AbstarctCacheAdapter;
 use Cent\RefrigeratorBundle\Entity\CacheDataEntity;
 
+use Cent\RefrigeratorBundle\Extension\RefrigeratorOptionsFactory;
+
 /**
  * CacheFactory
  *
@@ -21,6 +23,7 @@ class CacheFactory
     private $_options = array();
     private $_tags = array();
     private $_cacheOptions = array();
+    private $_cacheOptionsIgnored = array();
     
     protected $_cache;
     protected $_request;
@@ -60,8 +63,12 @@ class CacheFactory
             $this->_tags = $settings['tags'];
         }
         
-        if (isset($settings['cache_options']) && count($settings['cache_options'])) {
+        if (isset($settings['cache_options']) && ($settings['cache_options'] instanceof RefrigeratorOptionsFactory)) {
             $this->_cacheOptions = $settings['cache_options'];
+        }
+        
+        if (isset($settings['cache_options_ignored']) && count($settings['cache_options_ignored'])) {
+            $this->_cacheOptionsIgnored = $settings['cache_options_ignored'];
         }
         
         return $this;
@@ -75,6 +82,21 @@ class CacheFactory
         return array(
             'cache_all' => false,
         );
+    }
+    
+    /**
+     * Get cache option
+     * 
+     * @param array $params
+     * @return mixed
+     */
+    public function getCacheOption($params)
+    {
+        if (!empty($this->_cacheOptions)) {
+            return $this->_cacheOptions->getOption($params);
+        }
+        
+        return null;
     }
     
     /**
@@ -199,16 +221,18 @@ class CacheFactory
         // @TODO
         
         /*******************         @TODO      ****************************
+         * Залить на гитхаб
+         * !!!! Исправить в БД ложить только настройки к УРЛ
+         * Подправить формы
+         * Удалить ненужные формы
          * Положить в редис по параметрам (ссылка лимит)
          * сделать параметр игнорируемых страниц
          * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
+         * сброс по тегам
+         * хранение настроек в БД
+         * редактирование настроек
+         * запись в кеш отдельных частей
+         * придумать систему хранения
          * 
          */
          
@@ -233,15 +257,28 @@ class CacheFactory
         //}
         //headers_list()
         
-        $status = $this->getAdapter()->setCacheData(
-            $this->getKey($this->getRequest()),
-            new CacheDataEntity(array(
-                'meta'    => '',
-                'headers' => json_encode(headers_list()),
-                'content' => $this->getResponse()->getContent(),
-            )));
+        $key = $this->getKey($this->getRequest());
+        if (!$this->isIgnored($key)) {
+            $status = $this->getAdapter()->setCacheData(
+                $key,
+                new CacheDataEntity(array(
+                    'meta'    => '',
+                    'headers' => json_encode(headers_list()),
+                    'content' => $this->getResponse()->getContent(),
+                )),
+                (array) $this->getCacheOption(array('name' => $key))
+                );
+        }
         
         return $this;
+    }
+    
+    /**
+     * @TODO
+     */
+    public function isIgnored($name)
+    {
+        return preg_match('~^/(admin|_wdf)~i', $name);
     }
     
     

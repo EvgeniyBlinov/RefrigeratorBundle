@@ -49,7 +49,7 @@ abstract class AbstarctCacheAdapter
      * @param string $key
      * @param \Cent\RefrigeratorBundle\Entity\CacheDataEntity $cacheDataEntity
      */
-    abstract public function setCacheData($key, CacheDataEntity $cacheDataEntity);
+    abstract public function setCacheData($key, CacheDataEntity $cacheDataEntity, $options = array());
     
     /**
      * @param string $key
