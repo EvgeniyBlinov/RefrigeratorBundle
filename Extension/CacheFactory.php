@@ -257,8 +257,8 @@ class CacheFactory
         
         $key = $this->getKey($this->getRequest());
         if (!$this->isIgnored($key)) {
-            $cacheOprions = (array) $this->getCacheOption(array('name' => $key));
-            if ($this->getOption('cache_all') || count($cacheOprions)) {
+            $cacheOptions = (array) $this->getCacheOption(array('name' => $key));
+            if ($this->getOption('cache_all') || count($cacheOptions)) {
                 $status = $this->getAdapter()->setCacheData(
                     $key,
                     new CacheDataEntity(array(
@@ -266,7 +266,7 @@ class CacheFactory
                         'headers' => json_encode(headers_list()),
                         'content' => $this->getResponse()->getContent(),
                     )),
-                    $cacheOprions
+                    $cacheOptions
                 );
             }
         }
