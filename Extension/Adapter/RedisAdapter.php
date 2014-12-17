@@ -11,6 +11,8 @@ use Cent\RefrigeratorBundle\Entity\CacheDataEntity;
 
 class RedisAdapter extends AbstarctCacheAdapter
 {
+    const EXPIRE_NONE = -1;
+    
     /**
      * @return boolean
      */
@@ -34,7 +36,7 @@ class RedisAdapter extends AbstarctCacheAdapter
     {
         $client = $this->getClient();
         $client->set($key, (string) $cacheDataEntity);
-        if (isset($options['expire'])) {
+        if (isset($options['expire']) && $options['expire'] != self::EXPIRE_NONE) {
             $client->expire($key, $options['expire']);
         }
         
