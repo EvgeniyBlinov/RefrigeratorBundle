@@ -24,7 +24,7 @@ Add to composer.json
               "name"      : "cent/refrigerator-bundle",
               "version"   :"dev-master",
               "source": {
-                  "url": "git@github.com:EvgeniyBlinov/RefrigeratorBundle.git",
+                  "url": "git@github.com:EvgeniyBlinov/RefrigeratorBundle",
                   "type": "git",
                   "reference":"master"
                 },
