@@ -5,18 +5,37 @@ parameters:
         prefix: "ska:"
     refrigerator:
         cache_all: true
+        
+    refrigerator_ignored_links:
+        - { pattern: '~^/(en/)?(admin|_wd|frontend|media/cache)~i'}
 
 services:
     redis:
-        class: Predis\Client
+        #class: Predis\Client
+        class: Cent\RefrigeratorBundle\Extension\AdvancedRedisClient
         arguments: [ "%redis_uri%", "%redis_options%" ]
+        
+    #RefrigeratorLinksRepository:
+        #class: Doctrine\ORM\EntityRepository
+        #factory_service: doctrine.orm.entity_manager
+        #factory_method: getRepository
+        #arguments:
+            #- Bundle:RepositoryName
+        
+    refrigerator_options_factory:
+        class: Cent\RefrigeratorBundle\Extension\RefrigeratorOptionsFactory
+        arguments: [ "@RefrigeratorLinksRepository" ]
+    
+    redis_cache:
+        class: Cent\RefrigeratorBundle\Extension\Adapter\RedisAdapter
+        arguments: [ "@redis" ]
         
     cent.refrigerator_bundle.extension.cache_factory:
         class: Cent\RefrigeratorBundle\Extension\CacheFactory
         arguments: 
             0: "@redis"
             1: "@request_stack"
-            2: { options: "%refrigerator%", tags: "%entity_tags%", cache_options: "%refrigerator_options%" }
+            2: { options: "%refrigerator%", tags: "%entity_tags%", cache_options: "@refrigerator_options_factory", cache_options_ignored: "%refrigerator_ignored_links%" }
         calls: 
             - [ getAdapter ]
         

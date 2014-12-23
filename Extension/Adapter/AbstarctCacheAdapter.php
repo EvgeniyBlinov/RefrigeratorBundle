@@ -17,16 +17,13 @@ abstract class AbstarctCacheAdapter
      */
     protected $_client;
     
-    //protected $_cacheFactory;
-    
     /**
      * Constructor
      * 
      * @param mixed $client
      */
-    public function __construct(/*$cacheFactory, */$client)
+    public function __construct($client)
     {    
-        //$this->_cacheFactory = $cacheFactory;
         $this->_client       = $client;
     }
     

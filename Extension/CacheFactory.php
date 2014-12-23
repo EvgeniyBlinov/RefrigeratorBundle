@@ -7,9 +7,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 use Cent\RefrigeratorBundle\Extension\Adapter\RedisAdapter;
 use Cent\RefrigeratorBundle\Extension\Adapter\AbstarctCacheAdapter;
-use Cent\RefrigeratorBundle\Entity\CacheDataEntity;
-
 use Cent\RefrigeratorBundle\Extension\RefrigeratorOptionsFactory;
+use Cent\RefrigeratorBundle\Entity\CacheDataEntity;
 
 /**
  * CacheFactory
@@ -213,51 +212,11 @@ class CacheFactory
     
     /**
      * Set cache data
+     * 
+     * @return CacheFactory
      */
     public function setCacheData()
     {
-        
-        // @TODO
-        
-        /*******************         @TODO      ****************************
-         * Доделать композер
-         * Подправить формы
-         * Удалить ненужные формы
-         * придумать систему хранения
-         * запись в кеш отдельных частей
-         * сделать параметр игнорируемых страниц
-         * Положить в редис по параметрам (ссылка лимит)
-         * Понимать, что это ajax запрос
-         * 
-         * http://ska.dev.funcfunc.ru/championship/getTweets?hashtag=%23SKAAMR21214&last_tweet_id=539853022571270144
-         * 
-         * Разделение на ска и ска 1946
-         * Сделать хранение тегов и ссылок к ним в БД
-         * 
-         * 
-         */
-         
-         /**
-         *                  @TODO
-         * Записать хедеры и куки по отдельному в ключ
-         * хранить хедеры и контент
-         * хранить теги сущностей в редисе, для того, чтобы можно было
-         * удалять ключи при обновлении какого-нибудь тега
-         * выкидывать из хедеров куки, чтобы не было уязвимости
-         *
-         /**/
-        //foreach ($this->headers->allPreserveCase() as $name => $values) {
-            //foreach ($values as $value) {
-                //header($name.': '.$value, false, $this->statusCode);
-            //}
-        //}
-
-        //// cookies
-        //foreach ($this->headers->getCookies() as $cookie) {
-            //setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
-        //}
-        //headers_list()
-        
         $key = $this->getKey($this->getRequest());
         if (!$this->isIgnored($key)) {
             $cacheOptions = (array) $this->getCacheOption(array('name' => $key));
