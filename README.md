@@ -1,4 +1,4 @@
-RefrigeratorBundle
+RefrigeratorBundle [RU](README_RU.md)
 ==================
 
 RefrigeratorBundle - is a cache for SF2
