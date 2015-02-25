@@ -1,6 +1,3 @@
-!!!under construction.
----
-
 RefrigeratorBundle
 ==================
 
